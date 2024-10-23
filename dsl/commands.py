@@ -131,66 +131,60 @@ class Commands:
         if q_name not in self.qubits:
             raise ValueError(f"Qubit '{q_name}' is not defined.")
 
-        # Alice randomly selects a bit (0 or 1) and a basis (0: Rectilinear '+', 1: Diagonal 'x')
+        # Alice randomly selects a bit (0 or 1) and a basis ('+' for rectilinear, 'x' for diagonal)
         bit = random.randint(0, 1)
-        basis = random.randint(0, 1)
+        basis = random.choice(['+', 'x'])
 
         self.alice_bits.append(bit)
         self.alice_bases.append(basis)
 
-        # Prepare the qubit based on the selected basis and bit
-        if basis == 0:
-            # Rectilinear basis
+        # Prepare the qubit based on Alice's bit and basis
+        if basis == '+':
             if bit == 1:
-                self.circuit.x(self.qubits[q_name])
-        else:
-            # Diagonal basis
-            self.circuit.h(self.qubits[q_name])
+                self.circuit.x(self.qubits[q_name])  # Pauli-X (flip) if bit is 1
+        elif basis == 'x':
+            self.circuit.h(self.qubits[q_name])  # Hadamard for diagonal basis
             if bit == 1:
                 self.circuit.x(self.qubits[q_name])
 
         # Add a barrier to separate operations
         self.circuit.barrier()
 
-        print(
-            f"Alice sent qubit '{q_name}' with bit={bit} and basis={'+' if basis == 0 else 'x'}."
-        )
+        # Log Alice's send and circuit state
+        logger.info(f"Alice sent qubit '{q_name}' with bit={bit} and basis='{basis}'.")
+        logger.info(f"Current quantum circuit after Alice's send operation:\n{self.circuit}")
 
-    def bob_measure_qubit(self, q_name, basis_str):
+    def bob_measure_qubit(self, q_name, basis):
         if q_name not in self.qubits:
-            raise ValueError(f"Qubit '{q_name}' is not defined.")
+            logger.error(f"Error: Qubit '{q_name}' not found in self.qubits. Available qubits: {self.qubits.keys()}")
+            raise ValueError(f"Qubit '{q_name}' is not defined in self qubits.")
 
-        # Map basis string to integer
-        if basis_str.upper() == "H":
-            basis = 0  # Rectilinear
-        elif basis_str.upper() == "X":
-            basis = 1  # Diagonal
-        else:
-            raise ValueError(
-                f"Invalid basis '{basis_str}'. Use 'H' for rectilinear or 'X' for diagonal."
-            )
+        logger.info(f"Bob is measuring qubit '{q_name}' with basis '{basis}'.")
 
+        # Store Bob's basis
         self.bob_bases.append(basis)
 
-        # Apply basis transformation if necessary
-        if basis == 1:
-            self.circuit.h(self.qubits[q_name])
+        # Apply the appropriate gate based on Bob's chosen basis
+        if basis.upper() == 'H':  # Rectilinear basis
+            pass  # No need to apply any gate
+        elif basis.upper() == 'X':  # Diagonal basis
+            self.circuit.h(self.qubits[q_name])  # Apply Hadamard gate for diagonal basis
+        else:
+            raise ValueError(f"Unknown basis '{basis}' provided for Bob's measurement.")
 
-        # Define a classical bit name based on qubit name
-        c_name = f"c_{q_name}"
+        # Measure the qubit into the corresponding classical bit
+        c_name = f'c_{q_name}'
         if c_name in self.classical_bits:
-            raise ValueError(f"Classical bit '{c_name}' is already defined.")
-
-        # Add a new classical bit and measure
-        self.creg = ClassicalRegister(1, c_name)
-        self.circuit.add_register(self.creg)
-        self.classical_bits[c_name] = self.creg[0]
-        self.circuit.measure(self.qubits[q_name], self.classical_bits[c_name])
-
-        print(
-            f"Bob measured qubit '{q_name}' with basis={'+' if basis == 0 else 'x'} into classical bit '{c_name}'."
-        )
-
+            try:
+                logger.info(f"Measuring qubit '{q_name}' into classical bit '{c_name}'.")
+                self.circuit.measure(self.qubits[q_name], self.classical_bits[q_name])
+                logger.info(f"Current quantum circuit after Bob's measurement:\n{self.circuit}")
+            except Exception as e:
+                logger.error(f"Error while measuring qubit '{q_name}': {e}")
+                raise
+        else:
+            logger.error(f"Error: Classical bit for qubit '{q_name}' is not defined.")
+            raise ValueError(f"Classical bit for qubit '{q_name}' is not defined.")
     def sift_keys(self):
         # Transpile the circuit for the AerSimulator backend
         compiled_circuit = transpile(self.circuit, self.simulator)
