@@ -1,5 +1,3 @@
-# dsl/commands.py
-
 from qiskit import QuantumCircuit, ClassicalRegister, QuantumRegister, transpile
 from qiskit_aer import AerSimulator
 import logging
@@ -54,7 +52,7 @@ class Commands:
         qreg_name = f'qreg_{self.qreg_counter}'
         qreg = QuantumRegister(1, qreg_name)
         self.circuit.add_register(qreg)
-        self.qubits[q_name] = qreg[0]
+        self.qubits[q_name] = qreg[0]  # Store the actual qubit reference
         logger.info(f"Defined qubit '{q_name}'.")
 
         # Create a corresponding ClassicalRegister with a unique name
@@ -77,55 +75,19 @@ class Commands:
                 raise ValueError(f"Qubit '{q_name}' is not defined.")
             if gate == "h":
                 self.circuit.h(self.qubits[q_name])
-                print(f"Applied Hadamard gate on '{q_name}'.")
+                logger.info(f"Applied Hadamard gate on '{q_name}'.")
             elif gate == "x":
                 self.circuit.x(self.qubits[q_name])
-                print(f"Applied Pauli-X gate on '{q_name}'.")
+                logger.info(f"Applied Pauli-X gate on '{q_name}'.")
         elif gate == "cnot":
             if q_name not in self.qubits:
                 raise ValueError(f"Control qubit '{q_name}' is not defined.")
             if target_q not in self.qubits:
                 raise ValueError(f"Target qubit '{target_q}' is not defined.")
             self.circuit.cx(self.qubits[q_name], self.qubits[target_q])
-            print(f"Applied CNOT gate with control '{q_name}' and target '{target_q}'.")
+            logger.info(f"Applied CNOT gate with control '{q_name}' and target '{target_q}'.")
         else:
             raise ValueError(f"Unknown gate '{gate}'.")
-
-    def measure_qubit(self, q_name, basis_str):
-        if q_name not in self.qubits:
-            raise ValueError(f"Qubit '{q_name}' is not defined.")
-        c_name = f"c_{q_name}"
-        if c_name not in self.classical_bits:
-            raise ValueError(f"Classical bit '{c_name}' is not defined.")
-
-        # Map basis string to integer
-        if basis_str.upper() == "H":
-            basis = 0  # Rectilinear
-        elif basis_str.upper() == "X":
-            basis = 1  # Diagonal
-        else:
-            raise ValueError(
-                f"Invalid basis '{basis_str}'. Use 'H' for rectilinear or 'X' for diagonal."
-            )
-
-        self.bob_bases.append(basis)
-
-        # Apply basis transformation if necessary
-        if basis == 1:
-            self.circuit.h(self.qubits[q_name])
-
-        # Measure the qubit into the corresponding classical bit
-        self.circuit.measure(self.qubits[q_name], self.classical_bits[c_name])
-
-        logger.info(
-            f"Bob measured qubit '{q_name}' with basis={'H' if basis == 0 else 'X'} into classical bit '{c_name}'."
-        )
-
-
-    def print_variable(self, var_name):
-        # Schedule the variable for printing after execution
-        self.instructions.append(("print", var_name))
-        print(f"Scheduled print for variable '{var_name}'.")
 
     def alice_send_qubit(self, q_name):
         if q_name not in self.qubits:
@@ -156,7 +118,7 @@ class Commands:
 
     def bob_measure_qubit(self, q_name, basis):
         if q_name not in self.qubits:
-            logger.error(f"Error: Qubit '{q_name}' not found in self.qubits. Available qubits: {self.qubits.keys()}")
+            logger.error(f"Error: Qubit '{q_name}' not found in self qubits. Available qubits: {self.qubits.keys()}")
             raise ValueError(f"Qubit '{q_name}' is not defined in self qubits.")
 
         logger.info(f"Bob is measuring qubit '{q_name}' with basis '{basis}'.")
@@ -166,7 +128,7 @@ class Commands:
 
         # Apply the appropriate gate based on Bob's chosen basis
         if basis.upper() == 'H':  # Rectilinear basis
-            pass  # No need to apply any gate
+            pass  # No need to apply any gate for rectilinear basis
         elif basis.upper() == 'X':  # Diagonal basis
             self.circuit.h(self.qubits[q_name])  # Apply Hadamard gate for diagonal basis
         else:
@@ -177,7 +139,7 @@ class Commands:
         if c_name in self.classical_bits:
             try:
                 logger.info(f"Measuring qubit '{q_name}' into classical bit '{c_name}'.")
-                self.circuit.measure(self.qubits[q_name], self.classical_bits[q_name])
+                self.circuit.measure(self.qubits[q_name], self.classical_bits[c_name])
                 logger.info(f"Current quantum circuit after Bob's measurement:\n{self.circuit}")
             except Exception as e:
                 logger.error(f"Error while measuring qubit '{q_name}': {e}")
@@ -185,6 +147,8 @@ class Commands:
         else:
             logger.error(f"Error: Classical bit for qubit '{q_name}' is not defined.")
             raise ValueError(f"Classical bit for qubit '{q_name}' is not defined.")
+
+  
     def sift_keys(self):
         # Transpile the circuit for the AerSimulator backend
         compiled_circuit = transpile(self.circuit, self.simulator)
@@ -208,24 +172,34 @@ class Commands:
                     self.bob_bits.append(bit)
                 except IndexError:
                     logger.error(f"Bit index {bit_index} out of range for outcome '{outcome}'.")
-                    print(f"Execution Error: Bit index {bit_index} out of range for outcome '{outcome}'.")
                     return
                 except ValueError:
                     logger.error(f"Invalid bit value '{outcome[::-1][bit_index]}' for classical bit '{c_name}'.")
-                    print(f"Execution Error: Invalid bit value '{outcome[::-1][bit_index]}' for classical bit '{c_name}'.")
                     return
+
+        # Ensure Alice's and Bob's bases have the same length
+        if len(self.alice_bases) != len(self.bob_bases):
+            logger.error("Mismatch in the number of Alice's and Bob's bases.")
+            return
 
         # Sift keys where Alice's and Bob's bases match
         self.sifted_alice_bits = []
         self.sifted_bob_bits = []
         for i in range(len(self.alice_bases)):
-            if self.alice_bases[i] == self.bob_bases[i]:
-                self.shared_key.append(self.alice_bits[i])
-                self.sifted_alice_bits.append(self.alice_bits[i])
-                self.sifted_bob_bits.append(self.bob_bits[i])
+            alice_basis = self.alice_bases[i]
+            bob_basis = self.bob_bases[i]
 
-        logger.info(f"Sifted key: {self.shared_key}")
+        # Check if Alice's rectilinear matches Bob's rectilinear, or Alice's diagonal matches Bob's diagonal
+        if (alice_basis == '+' and bob_basis == 'H') or (alice_basis == 'x' and bob_basis == 'X'):
+            self.shared_key.append(self.alice_bits[i])
+            self.sifted_alice_bits.append(self.alice_bits[i])
+            self.sifted_bob_bits.append(self.bob_bits[i])
+            logger.info(f"Match found! Alice's bit: {self.alice_bits[i]}, Bob's bit: {self.bob_bits[i]}")
 
+        if not self.shared_key:
+            logger.warning("No matching bases found. Shared key is empty.")
+        else:
+            logger.info(f"Sifted key: {self.shared_key}")
 
     def check_eavesdropping(self, probability=0.5, threshold=0.1):
         # Update eavesdropping parameters if provided
@@ -247,17 +221,52 @@ class Commands:
         else:
             print("No eavesdropping detected.")
 
-    def generate_key(self, key_name):
+    def generate_key(self, key_name, num_keys=1, key_length=None):
+        """
+        Generate one or more shared keys.
+    
+        :param key_name: Base name for the keys to be generated.
+        :param num_keys: Number of keys to generate. Default is 1.
+        :param key_length: Desired length of the key(s). If not provided, the full sifted key will be used.
+        :raises ValueError: If no shared key is available or if the key length exceeds available bits.
+        """
+
         if not self.shared_key:
             raise ValueError("No shared key available to generate.")
+    
+        # Determine the maximum key length available from the sifted key
+        max_available_length = len(self.shared_key)
+    
+        if key_length is None:
+            key_length = max_available_length
+        elif key_length > max_available_length:
+            raise ValueError(f"Requested key length {key_length} exceeds available sifted key length {max_available_length}.")
+    
+        # Generate multiple keys if requested
+        keys = []
+        for i in range(num_keys):
+            # Generate a new key by using `key_length` bits from the shared key
+            key = "".join(str(bit) for bit in self.shared_key[:key_length])
+        
+            # Optionally: Shuffle or rotate the sifted bits for multiple keys
+            # (You could rotate or modify the shared key for each subsequent key)
+        
+            # Add key to the list of generated keys
+            keys.append(key)
+    
+        # Store the generated keys with unique names
+        for i, key in enumerate(keys):
+            full_key_name = f"{key_name}_{i+1}" if num_keys > 1 else key_name
+            setattr(self, full_key_name, key)
+            print(f"Generated key '{full_key_name}': {key}")
+    
+        # Optionally: Return the list of keys for further processing or verification
+        return keys
 
-        # Concatenate sifted bits into a binary string
-        key = "".join(str(bit) for bit in self.shared_key)
-
-        # Assign the key to the specified key name
-        setattr(self, key_name, key)
-
-        print(f"Generated key '{key_name}': {key}")
+    def print_variable(self, var_name):
+        # Schedule the variable for printing after execution
+        self.instructions.append(("print", var_name))
+        print(f"Scheduled print for variable '{var_name}'.")
 
     def execute_eavesdropping(self, custom_probability=None):
         # Simulate Eve intercepting and measuring qubits based on probability
