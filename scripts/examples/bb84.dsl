@@ -1,4 +1,4 @@
-# BB84 Protocol Example
+# BB84 Protocol Example DSL Script
 qubit q0
 qubit q1
 qubit q2

@@ -4,9 +4,8 @@ from .parser import parse
 from .commands import Commands
 
 class DSLInterpreter:
-    def __init__(self, data):
+    def __init__(self):
         print("Initializing DSLInterpreter...")
-        self.parser = parse(data)
         self.commands = Commands()
         print("DSLInterpreter initialized successfully.")
 
@@ -14,7 +13,7 @@ class DSLInterpreter:
         print("Starting interpretation of the script...")
         try:
             # Parse the script
-            parsed_commands = self.parser(script)
+            parsed_commands = parse(script)  # Correctly parse the script
             print(f"Parsed commands: {parsed_commands}")
         except SyntaxError as e:
             print(f"Parsing Error: {e}")
@@ -91,14 +90,6 @@ class DSLInterpreter:
                     print(f"Print Error: Unknown variable '{var_name}'.")
 
     def retrieve_bit_value(self, c_name):
-        # Retrieve the measurement outcome from the shared key if possible
-        # Since the actual measurement is done in 'sift_keys', and the sifted key is stored
-        # Here, we should map classical bits to their measured values
-        # However, in the current 'Commands' class, individual classical bit values are not stored
-        # To implement this, we need to store measurement results in the 'Commands' class
-        # For simplicity, we'll simulate the retrieval by accessing 'bob_bits'
-
-        # Extract the index based on classical bit name
         try:
             index = list(self.commands.classical_bits.keys()).index(c_name)
             if index < len(self.commands.bob_bits):
