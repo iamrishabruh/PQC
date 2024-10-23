@@ -30,7 +30,7 @@ class DSLInterpreter:
             try:
                 if action == 'qubit':
                     self.commands.define_qubit(cmd[1])
-                elif action in ['h', 'x']:
+                elif action in ['h', 'x', 's', 't', 'rz']:
                     self.commands.apply_gate(action, cmd[1])
                 elif action == 'cnot':
                     self.commands.apply_gate(action, cmd[1], cmd[2])

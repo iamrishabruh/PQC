@@ -8,15 +8,14 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 logger = logging.getLogger(__name__)
 
 class Commands:
-    def __init__(self):
+    def __init__(self, num_qubits=1):
+        
         # Initialize Quantum and Classical Registers
         self.qreg_counter = 0
         self.creg_counter = 0
-        self.qreg = QuantumRegister(0, 'qreg')
-        self.creg = ClassicalRegister(0, 'creg')
-        self.circuit = QuantumCircuit()
-        self.circuit.add_register(self.qreg)
-        self.circuit.add_register(self.creg)
+        self.qreg = QuantumRegister(num_qubits, 'qreg')
+        self.creg = ClassicalRegister(num_qubits, 'creg')
+        self.circuit = QuantumCircuit(self.qreg, self.creg)
 
         # Dictionaries to keep track of qubits and classical bits
         self.qubits = {}
@@ -67,72 +66,66 @@ class Commands:
         self.creg_counter += 1
 
         logger.info(f"Defined qubit '{q_name}' and classical bit 'c_{q_name}'.")
-
-
-    def apply_gate(self, gate, q_name, target_q=None):
-        if gate in ["h", "x"]:
-            if q_name not in self.qubits:
-                raise ValueError(f"Qubit '{q_name}' is not defined.")
-            if gate == "h":
-                self.circuit.h(self.qubits[q_name])
-                logger.info(f"Applied Hadamard gate on '{q_name}'.")
-            elif gate == "x":
-                self.circuit.x(self.qubits[q_name])
-                logger.info(f"Applied Pauli-X gate on '{q_name}'.")
+    def apply_random_gate(self, q_name, target_q_name=None):
+        available_gates = ["h", "x", "s", "t", "rz", "cnot"]
+        gate = random.choice(available_gates)
+        
+        if gate == "rz":
+            angle = random.uniform(0, 2 * 3.14159)
+            self.apply_gate(gate, q_name, angle=angle)
         elif gate == "cnot":
-            if q_name not in self.qubits:
-                raise ValueError(f"Control qubit '{q_name}' is not defined.")
-            if target_q not in self.qubits:
-                raise ValueError(f"Target qubit '{target_q}' is not defined.")
-            self.circuit.cx(self.qubits[q_name], self.qubits[target_q])
-            logger.info(f"Applied CNOT gate with control '{q_name}' and target '{target_q}'.")
+            if not target_q_name:
+                raise ValueError("CNOT gate requires a control and a target qubit.")
+            self.apply_gate(gate, q_name, target_q=target_q_name)
         else:
-            raise ValueError(f"Unknown gate '{gate}'.")
+            self.apply_gate(gate, q_name)
+
+        logger.info(f"Applied random gate '{gate}' on '{q_name}'.")
 
     def alice_send_qubit(self, q_name):
+        """Alice randomly selects a bit (0 or 1) and a basis ('+' for rectilinear, 'x' for diagonal) to send the qubit."""
         if q_name not in self.qubits:
             raise ValueError(f"Qubit '{q_name}' is not defined.")
 
         # Alice randomly selects a bit (0 or 1) and a basis ('+' for rectilinear, 'x' for diagonal)
         bit = random.randint(0, 1)
-        basis = random.choice(['+', 'x'])
+        basis = random.choice(['+', 'x'])  # Restrict basis to BB84 compatible choices
 
         self.alice_bits.append(bit)
         self.alice_bases.append(basis)
 
         # Prepare the qubit based on Alice's bit and basis
-        if basis == '+':
+        if basis == '+':  # Rectilinear basis
             if bit == 1:
-                self.circuit.x(self.qubits[q_name])  # Pauli-X (flip) if bit is 1
-        elif basis == 'x':
+                self.circuit.x(self.qubits[q_name])  # Apply Pauli-X for bit 1
+        elif basis == 'x':  # Diagonal basis
             self.circuit.h(self.qubits[q_name])  # Hadamard for diagonal basis
             if bit == 1:
-                self.circuit.x(self.qubits[q_name])
+                self.circuit.x(self.qubits[q_name])  # Apply Pauli-X after Hadamard if bit is 1
 
         # Add a barrier to separate operations
         self.circuit.barrier()
 
-        # Log Alice's send and circuit state
         logger.info(f"Alice sent qubit '{q_name}' with bit={bit} and basis='{basis}'.")
         logger.info(f"Current quantum circuit after Alice's send operation:\n{self.circuit}")
-
     def bob_measure_qubit(self, q_name, basis):
+        """Bob randomly selects a basis (rectilinear or diagonal) to measure the qubit."""
         if q_name not in self.qubits:
             logger.error(f"Error: Qubit '{q_name}' not found in self qubits. Available qubits: {self.qubits.keys()}")
             raise ValueError(f"Qubit '{q_name}' is not defined in self qubits.")
 
+        # Bob randomly selects a measurement basis
+        basis = random.choice(['+', 'x'])  # '+' for rectilinear, 'x' for diagonal
         logger.info(f"Bob is measuring qubit '{q_name}' with basis '{basis}'.")
 
-        # Store Bob's basis
+        # Store Bob's chosen basis
         self.bob_bases.append(basis)
 
-        # Apply the appropriate gate based on Bob's chosen basis
-        if basis.upper() == 'H':  # Rectilinear basis
-            pass  # No need to apply any gate for rectilinear basis
-        elif basis.upper() == 'X':  # Diagonal basis
-            self.circuit.h(self.qubits[q_name])  # Apply Hadamard gate for diagonal basis
-        else:
-            raise ValueError(f"Unknown basis '{basis}' provided for Bob's measurement.")
+        # Apply Hadamard gate if Bob chooses the diagonal basis
+        if basis == 'x':  # Diagonal basis
+            self.circuit.h(self.qubits[q_name])
+            logger.info(f"Applied Hadamard gate on qubit '{q_name}' for diagonal measurement.")
+        # If rectilinear basis is chosen, no gate is needed
 
         # Measure the qubit into the corresponding classical bit
         c_name = f'c_{q_name}'
@@ -147,79 +140,39 @@ class Commands:
         else:
             logger.error(f"Error: Classical bit for qubit '{q_name}' is not defined.")
             raise ValueError(f"Classical bit for qubit '{q_name}' is not defined.")
-
-  
     def sift_keys(self):
-        # Transpile the circuit for the AerSimulator backend
+        """Sift keys by comparing Alice's and Bob's bases."""
         compiled_circuit = transpile(self.circuit, self.simulator)
-
-        # Execute the transpiled circuit on the AerSimulator
         job = self.simulator.run(compiled_circuit, shots=1)
         result = job.result()
         counts = result.get_counts()
-        outcome = list(counts.keys())[0].replace(" ", "")  # Remove any spaces
 
-        logger.info(f"Measurement outcome: {outcome}")
+        outcome = list(counts.keys())[0][::-1]  # Reverse for little-endian order
 
-        # Extract Bob's bits based on classical bits
-        for q_name in self.qubits:
-            c_name = f"c_{q_name}"
-            if c_name in self.classical_bits:
-                # Qiskit returns bitstrings in little endian; reverse the outcome
-                bit_index = list(self.classical_bits.keys()).index(c_name)
-                try:
-                    bit = int(outcome[::-1][bit_index])
-                    self.bob_bits.append(bit)
-                except IndexError:
-                    logger.error(f"Bit index {bit_index} out of range for outcome '{outcome}'.")
-                    return
-                except ValueError:
-                    logger.error(f"Invalid bit value '{outcome[::-1][bit_index]}' for classical bit '{c_name}'.")
-                    return
+        self.bob_bits = [int(outcome[i]) for i in range(len(self.qreg))]
 
-        # Ensure Alice's and Bob's bases have the same length
-        if len(self.alice_bases) != len(self.bob_bases):
-            logger.error("Mismatch in the number of Alice's and Bob's bases.")
-            return
-
-        # Sift keys where Alice's and Bob's bases match
-        self.sifted_alice_bits = []
-        self.sifted_bob_bits = []
         for i in range(len(self.alice_bases)):
-            alice_basis = self.alice_bases[i]
-            bob_basis = self.bob_bases[i]
-
-        # Check if Alice's rectilinear matches Bob's rectilinear, or Alice's diagonal matches Bob's diagonal
-        if (alice_basis == '+' and bob_basis == 'H') or (alice_basis == 'x' and bob_basis == 'X'):
-            self.shared_key.append(self.alice_bits[i])
-            self.sifted_alice_bits.append(self.alice_bits[i])
-            self.sifted_bob_bits.append(self.bob_bits[i])
-            logger.info(f"Match found! Alice's bit: {self.alice_bits[i]}, Bob's bit: {self.bob_bits[i]}")
+            if self.alice_bases[i] == self.bob_bases[i]:
+                self.shared_key.append(self.alice_bits[i])
 
         if not self.shared_key:
             logger.warning("No matching bases found. Shared key is empty.")
         else:
             logger.info(f"Sifted key: {self.shared_key}")
 
-    def check_eavesdropping(self, probability=0.5, threshold=0.1):
-        # Update eavesdropping parameters if provided
-        self.eavesdrop_probability = probability
-        self.error_threshold = threshold
+    def check_eavesdropping(self):
+        """Check for eavesdropping by analyzing the error rate."""
+        if not self.shared_key:
+            logger.warning("No key to analyze for eavesdropping.")
+            return
 
-        print("Checking for eavesdropping...")
-
-        # Simulate eavesdropping based on the specified probability
-        if self.eavesdropping:
-            # Insert logic for eavesdropping check if implemented
-            pass  # Placeholder for future implementation
-
-        # Placeholder: In this basic implementation, assume no eavesdropping
-        error_rate = 0  # To be calculated based on actual measurements
+        errors = sum([1 for a, b in zip(self.alice_bits, self.bob_bits) if a != b])
+        error_rate = errors / len(self.shared_key)
 
         if error_rate > self.error_threshold:
-            print("Eavesdropping detected!")
+            logger.warning(f"Eavesdropping detected with error rate {error_rate}!")
         else:
-            print("No eavesdropping detected.")
+            logger.info(f"No eavesdropping detected. Error rate: {error_rate}.")
 
     def generate_key(self, key_name, num_keys=1, key_length=None):
         """
@@ -262,47 +215,7 @@ class Commands:
     
         # Optionally: Return the list of keys for further processing or verification
         return keys
-
     def print_variable(self, var_name):
         # Schedule the variable for printing after execution
         self.instructions.append(("print", var_name))
         print(f"Scheduled print for variable '{var_name}'.")
-
-    def execute_eavesdropping(self, custom_probability=None):
-        # Simulate Eve intercepting and measuring qubits based on probability
-        if custom_probability is not None:
-            self.eavesdrop_probability = custom_probability
-        else:
-            self.eavesdrop_probability = 0.5  # Default 50%
-
-        print(
-            f"Eavesdropping simulation initiated with probability {self.eavesdrop_probability*100}%."
-        )
-
-        for q_name in self.qubits:
-            if random.random() < self.eavesdrop_probability:
-                # Eve chooses a random basis
-                basis = random.randint(0, 1)
-                basis_str = "H" if basis == 0 else "X"
-                print(
-                    f"Eve intercepts qubit '{q_name}' and measures with basis '{basis_str}'."
-                )
-
-                # Apply basis transformation if diagonal
-                if basis == 1:
-                    self.circuit.h(self.qubits[q_name])
-
-                # Define a classical bit name for Eve's measurement
-                c_name = f"c_eve_{q_name}"
-                if c_name in self.classical_bits:
-                    raise ValueError(f"Classical bit '{c_name}' is already defined.")
-
-                # Add a new classical bit and measure
-                self.creg = ClassicalRegister(1, c_name)
-                self.circuit.add_register(self.creg)
-                self.classical_bits[c_name] = self.creg[0]
-                self.circuit.measure(self.qubits[q_name], self.classical_bits[c_name])
-
-                print(
-                    f"Eve measured qubit '{q_name}' and stored the result in classical bit '{c_name}'."
-                )

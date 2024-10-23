@@ -6,9 +6,9 @@ _tabversion = '3.10'
 
 _lr_method = 'LALR'
 
-_lr_signature = 'ALICE_SEND BOB_MEASURE CHECK_EAVESDROPPING CNOT EAVESDROP GENERATE_KEY H IDENTIFIER MEASURE PRINT QUBIT SIFT_KEYS Xscript : statementsstatements : statements statementstatements : statementstatement : QUBIT IDENTIFIERstatement : H IDENTIFIERstatement : X IDENTIFIERstatement : CNOT IDENTIFIER IDENTIFIERstatement : MEASURE IDENTIFIER IDENTIFIERstatement : PRINT IDENTIFIERstatement : ALICE_SEND IDENTIFIERstatement : BOB_MEASURE IDENTIFIER IDENTIFIERstatement : SIFT_KEYSstatement : CHECK_EAVESDROPPINGstatement : GENERATE_KEY IDENTIFIERstatement : EAVESDROP'
+_lr_signature = 'ALICE_SEND BOB_MEASURE CHECK_EAVESDROPPING CNOT EAVESDROP GENERATE_KEY H IDENTIFIER MEASURE NUMBER PRINT QUBIT RANDOM_GATE RZ S SIFT_KEYS T Xscript : statementsstatements : statements statementstatements : statementstatement : QUBIT IDENTIFIERstatement : H IDENTIFIERstatement : X IDENTIFIERstatement : S IDENTIFIERstatement : T IDENTIFIERstatement : RZ IDENTIFIER NUMBERstatement : CNOT IDENTIFIER IDENTIFIERstatement : MEASURE IDENTIFIER IDENTIFIERstatement : PRINT IDENTIFIERstatement : ALICE_SEND IDENTIFIERstatement : BOB_MEASURE IDENTIFIER IDENTIFIERstatement : SIFT_KEYSstatement : CHECK_EAVESDROPPINGstatement : GENERATE_KEY IDENTIFIERstatement : EAVESDROPstatement : RANDOM_GATE IDENTIFIERstatement : RANDOM_GATE IDENTIFIER IDENTIFIER'
     
-_lr_action_items = {'QUBIT':([0,2,3,12,13,15,16,17,18,19,22,23,25,26,27,28,],[4,4,-3,-12,-13,-15,-2,-4,-5,-6,-9,-10,-14,-7,-8,-11,]),'H':([0,2,3,12,13,15,16,17,18,19,22,23,25,26,27,28,],[5,5,-3,-12,-13,-15,-2,-4,-5,-6,-9,-10,-14,-7,-8,-11,]),'X':([0,2,3,12,13,15,16,17,18,19,22,23,25,26,27,28,],[6,6,-3,-12,-13,-15,-2,-4,-5,-6,-9,-10,-14,-7,-8,-11,]),'CNOT':([0,2,3,12,13,15,16,17,18,19,22,23,25,26,27,28,],[7,7,-3,-12,-13,-15,-2,-4,-5,-6,-9,-10,-14,-7,-8,-11,]),'MEASURE':([0,2,3,12,13,15,16,17,18,19,22,23,25,26,27,28,],[8,8,-3,-12,-13,-15,-2,-4,-5,-6,-9,-10,-14,-7,-8,-11,]),'PRINT':([0,2,3,12,13,15,16,17,18,19,22,23,25,26,27,28,],[9,9,-3,-12,-13,-15,-2,-4,-5,-6,-9,-10,-14,-7,-8,-11,]),'ALICE_SEND':([0,2,3,12,13,15,16,17,18,19,22,23,25,26,27,28,],[10,10,-3,-12,-13,-15,-2,-4,-5,-6,-9,-10,-14,-7,-8,-11,]),'BOB_MEASURE':([0,2,3,12,13,15,16,17,18,19,22,23,25,26,27,28,],[11,11,-3,-12,-13,-15,-2,-4,-5,-6,-9,-10,-14,-7,-8,-11,]),'SIFT_KEYS':([0,2,3,12,13,15,16,17,18,19,22,23,25,26,27,28,],[12,12,-3,-12,-13,-15,-2,-4,-5,-6,-9,-10,-14,-7,-8,-11,]),'CHECK_EAVESDROPPING':([0,2,3,12,13,15,16,17,18,19,22,23,25,26,27,28,],[13,13,-3,-12,-13,-15,-2,-4,-5,-6,-9,-10,-14,-7,-8,-11,]),'GENERATE_KEY':([0,2,3,12,13,15,16,17,18,19,22,23,25,26,27,28,],[14,14,-3,-12,-13,-15,-2,-4,-5,-6,-9,-10,-14,-7,-8,-11,]),'EAVESDROP':([0,2,3,12,13,15,16,17,18,19,22,23,25,26,27,28,],[15,15,-3,-12,-13,-15,-2,-4,-5,-6,-9,-10,-14,-7,-8,-11,]),'$end':([1,2,3,12,13,15,16,17,18,19,22,23,25,26,27,28,],[0,-1,-3,-12,-13,-15,-2,-4,-5,-6,-9,-10,-14,-7,-8,-11,]),'IDENTIFIER':([4,5,6,7,8,9,10,11,14,20,21,24,],[17,18,19,20,21,22,23,24,25,26,27,28,]),}
+_lr_action_items = {'QUBIT':([0,2,3,15,16,18,20,21,22,23,24,25,29,30,32,33,34,35,36,37,38,],[4,4,-3,-15,-16,-18,-2,-4,-5,-6,-7,-8,-12,-13,-17,-19,-9,-10,-11,-14,-20,]),'H':([0,2,3,15,16,18,20,21,22,23,24,25,29,30,32,33,34,35,36,37,38,],[5,5,-3,-15,-16,-18,-2,-4,-5,-6,-7,-8,-12,-13,-17,-19,-9,-10,-11,-14,-20,]),'X':([0,2,3,15,16,18,20,21,22,23,24,25,29,30,32,33,34,35,36,37,38,],[6,6,-3,-15,-16,-18,-2,-4,-5,-6,-7,-8,-12,-13,-17,-19,-9,-10,-11,-14,-20,]),'S':([0,2,3,15,16,18,20,21,22,23,24,25,29,30,32,33,34,35,36,37,38,],[7,7,-3,-15,-16,-18,-2,-4,-5,-6,-7,-8,-12,-13,-17,-19,-9,-10,-11,-14,-20,]),'T':([0,2,3,15,16,18,20,21,22,23,24,25,29,30,32,33,34,35,36,37,38,],[8,8,-3,-15,-16,-18,-2,-4,-5,-6,-7,-8,-12,-13,-17,-19,-9,-10,-11,-14,-20,]),'RZ':([0,2,3,15,16,18,20,21,22,23,24,25,29,30,32,33,34,35,36,37,38,],[9,9,-3,-15,-16,-18,-2,-4,-5,-6,-7,-8,-12,-13,-17,-19,-9,-10,-11,-14,-20,]),'CNOT':([0,2,3,15,16,18,20,21,22,23,24,25,29,30,32,33,34,35,36,37,38,],[10,10,-3,-15,-16,-18,-2,-4,-5,-6,-7,-8,-12,-13,-17,-19,-9,-10,-11,-14,-20,]),'MEASURE':([0,2,3,15,16,18,20,21,22,23,24,25,29,30,32,33,34,35,36,37,38,],[11,11,-3,-15,-16,-18,-2,-4,-5,-6,-7,-8,-12,-13,-17,-19,-9,-10,-11,-14,-20,]),'PRINT':([0,2,3,15,16,18,20,21,22,23,24,25,29,30,32,33,34,35,36,37,38,],[12,12,-3,-15,-16,-18,-2,-4,-5,-6,-7,-8,-12,-13,-17,-19,-9,-10,-11,-14,-20,]),'ALICE_SEND':([0,2,3,15,16,18,20,21,22,23,24,25,29,30,32,33,34,35,36,37,38,],[13,13,-3,-15,-16,-18,-2,-4,-5,-6,-7,-8,-12,-13,-17,-19,-9,-10,-11,-14,-20,]),'BOB_MEASURE':([0,2,3,15,16,18,20,21,22,23,24,25,29,30,32,33,34,35,36,37,38,],[14,14,-3,-15,-16,-18,-2,-4,-5,-6,-7,-8,-12,-13,-17,-19,-9,-10,-11,-14,-20,]),'SIFT_KEYS':([0,2,3,15,16,18,20,21,22,23,24,25,29,30,32,33,34,35,36,37,38,],[15,15,-3,-15,-16,-18,-2,-4,-5,-6,-7,-8,-12,-13,-17,-19,-9,-10,-11,-14,-20,]),'CHECK_EAVESDROPPING':([0,2,3,15,16,18,20,21,22,23,24,25,29,30,32,33,34,35,36,37,38,],[16,16,-3,-15,-16,-18,-2,-4,-5,-6,-7,-8,-12,-13,-17,-19,-9,-10,-11,-14,-20,]),'GENERATE_KEY':([0,2,3,15,16,18,20,21,22,23,24,25,29,30,32,33,34,35,36,37,38,],[17,17,-3,-15,-16,-18,-2,-4,-5,-6,-7,-8,-12,-13,-17,-19,-9,-10,-11,-14,-20,]),'EAVESDROP':([0,2,3,15,16,18,20,21,22,23,24,25,29,30,32,33,34,35,36,37,38,],[18,18,-3,-15,-16,-18,-2,-4,-5,-6,-7,-8,-12,-13,-17,-19,-9,-10,-11,-14,-20,]),'RANDOM_GATE':([0,2,3,15,16,18,20,21,22,23,24,25,29,30,32,33,34,35,36,37,38,],[19,19,-3,-15,-16,-18,-2,-4,-5,-6,-7,-8,-12,-13,-17,-19,-9,-10,-11,-14,-20,]),'$end':([1,2,3,15,16,18,20,21,22,23,24,25,29,30,32,33,34,35,36,37,38,],[0,-1,-3,-15,-16,-18,-2,-4,-5,-6,-7,-8,-12,-13,-17,-19,-9,-10,-11,-14,-20,]),'IDENTIFIER':([4,5,6,7,8,9,10,11,12,13,14,17,19,27,28,31,33,],[21,22,23,24,25,26,27,28,29,30,31,32,33,35,36,37,38,]),'NUMBER':([26,],[34,]),}
 
 _lr_action = {}
 for _k, _v in _lr_action_items.items():
@@ -17,7 +17,7 @@ for _k, _v in _lr_action_items.items():
       _lr_action[_x][_k] = _y
 del _lr_action_items
 
-_lr_goto_items = {'script':([0,],[1,]),'statements':([0,],[2,]),'statement':([0,2,],[3,16,]),}
+_lr_goto_items = {'script':([0,],[1,]),'statements':([0,],[2,]),'statement':([0,2,],[3,20,]),}
 
 _lr_goto = {}
 for _k, _v in _lr_goto_items.items():
@@ -27,19 +27,24 @@ for _k, _v in _lr_goto_items.items():
 del _lr_goto_items
 _lr_productions = [
   ("S' -> script","S'",1,None,None,None),
-  ('script -> statements','script',1,'p_script','parser.py',66),
-  ('statements -> statements statement','statements',2,'p_statements_multiple','parser.py',70),
-  ('statements -> statement','statements',1,'p_statements_single','parser.py',74),
-  ('statement -> QUBIT IDENTIFIER','statement',2,'p_statement_qubit','parser.py',78),
-  ('statement -> H IDENTIFIER','statement',2,'p_statement_h','parser.py',82),
-  ('statement -> X IDENTIFIER','statement',2,'p_statement_x','parser.py',86),
-  ('statement -> CNOT IDENTIFIER IDENTIFIER','statement',3,'p_statement_cnot','parser.py',90),
-  ('statement -> MEASURE IDENTIFIER IDENTIFIER','statement',3,'p_statement_measure','parser.py',94),
-  ('statement -> PRINT IDENTIFIER','statement',2,'p_statement_print','parser.py',98),
-  ('statement -> ALICE_SEND IDENTIFIER','statement',2,'p_statement_alice_send','parser.py',102),
-  ('statement -> BOB_MEASURE IDENTIFIER IDENTIFIER','statement',3,'p_statement_bob_measure','parser.py',106),
-  ('statement -> SIFT_KEYS','statement',1,'p_statement_sift_keys','parser.py',110),
-  ('statement -> CHECK_EAVESDROPPING','statement',1,'p_statement_check_eavesdropping','parser.py',114),
-  ('statement -> GENERATE_KEY IDENTIFIER','statement',2,'p_statement_generate_key','parser.py',118),
-  ('statement -> EAVESDROP','statement',1,'p_statement_eavesdrop','parser.py',122),
+  ('script -> statements','script',1,'p_script','parser.py',94),
+  ('statements -> statements statement','statements',2,'p_statements_multiple','parser.py',98),
+  ('statements -> statement','statements',1,'p_statements_single','parser.py',102),
+  ('statement -> QUBIT IDENTIFIER','statement',2,'p_statement_qubit','parser.py',106),
+  ('statement -> H IDENTIFIER','statement',2,'p_statement_h','parser.py',110),
+  ('statement -> X IDENTIFIER','statement',2,'p_statement_x','parser.py',114),
+  ('statement -> S IDENTIFIER','statement',2,'p_statement_s','parser.py',118),
+  ('statement -> T IDENTIFIER','statement',2,'p_statement_t','parser.py',122),
+  ('statement -> RZ IDENTIFIER NUMBER','statement',3,'p_statement_rz','parser.py',126),
+  ('statement -> CNOT IDENTIFIER IDENTIFIER','statement',3,'p_statement_cnot','parser.py',130),
+  ('statement -> MEASURE IDENTIFIER IDENTIFIER','statement',3,'p_statement_measure','parser.py',134),
+  ('statement -> PRINT IDENTIFIER','statement',2,'p_statement_print','parser.py',138),
+  ('statement -> ALICE_SEND IDENTIFIER','statement',2,'p_statement_alice_send','parser.py',142),
+  ('statement -> BOB_MEASURE IDENTIFIER IDENTIFIER','statement',3,'p_statement_bob_measure','parser.py',146),
+  ('statement -> SIFT_KEYS','statement',1,'p_statement_sift_keys','parser.py',150),
+  ('statement -> CHECK_EAVESDROPPING','statement',1,'p_statement_check_eavesdropping','parser.py',154),
+  ('statement -> GENERATE_KEY IDENTIFIER','statement',2,'p_statement_generate_key','parser.py',158),
+  ('statement -> EAVESDROP','statement',1,'p_statement_eavesdrop','parser.py',162),
+  ('statement -> RANDOM_GATE IDENTIFIER','statement',2,'p_statement_random_gate','parser.py',166),
+  ('statement -> RANDOM_GATE IDENTIFIER IDENTIFIER','statement',3,'p_statement_random_cnot','parser.py',170),
 ]

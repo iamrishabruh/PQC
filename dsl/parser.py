@@ -9,6 +9,9 @@ tokens = (
     'QUBIT',
     'H',
     'X',
+    'S',
+    'T',
+    'RZ',
     'CNOT',
     'MEASURE',
     'PRINT',
@@ -18,6 +21,8 @@ tokens = (
     'CHECK_EAVESDROPPING',
     'GENERATE_KEY',
     'EAVESDROP',
+    'NUMBER',
+    'RANDOM_GATE',
 )
 
 # Reserved words dictionary
@@ -25,6 +30,9 @@ reserved = {
     'qubit': 'QUBIT',
     'h': 'H',
     'x': 'X',
+    's': 'S',
+    't': 'T',
+    'rz': 'RZ',
     'cnot': 'CNOT',
     'measure': 'MEASURE',
     'print': 'PRINT',
@@ -39,6 +47,9 @@ reserved = {
 # Regular expression rules for simple tokens
 t_H = r'h'
 t_X = r'x'
+t_S = r's'
+t_T = r't'
+t_RZ = r'rz'
 t_CNOT = r'cnot'
 t_MEASURE = r'measure'
 t_PRINT = r'print'
@@ -103,6 +114,18 @@ def p_statement_x(p):
     '''statement : X IDENTIFIER'''
     p[0] = ('x', p[2])
 
+def p_statement_s(p):
+    '''statement : S IDENTIFIER'''
+    p[0] = ('s', p[2])
+
+def p_statement_t(p):
+    '''statement : T IDENTIFIER'''
+    p[0] = ('t', p[2])
+
+def p_statement_rz(p):
+    '''statement : RZ IDENTIFIER NUMBER'''
+    p[0] = ('rz', p[2], p[3])
+
 def p_statement_cnot(p):
     '''statement : CNOT IDENTIFIER IDENTIFIER'''
     p[0] = ('cnot', p[2], p[3])
@@ -138,6 +161,14 @@ def p_statement_generate_key(p):
 def p_statement_eavesdrop(p):
     '''statement : EAVESDROP'''
     p[0] = ('eavesdrop',)
+
+def p_statement_random_gate(p):
+    '''statement : RANDOM_GATE IDENTIFIER'''
+    p[0] = ('random_gate', p[2])
+    
+def p_statement_random_cnot(p):
+    '''statement : RANDOM_GATE IDENTIFIER IDENTIFIER'''
+    p[0] = ('random_gate', p[2], p[3])
 
 def p_error(p):
     if p:
