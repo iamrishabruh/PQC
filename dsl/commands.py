@@ -2,14 +2,23 @@
 
 from qiskit import QuantumCircuit, ClassicalRegister, QuantumRegister, transpile
 from qiskit_aer import AerSimulator
+import logging
 import random
+
+# Configure logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
 
 class Commands:
     def __init__(self):
         # Initialize Quantum and Classical Registers
-        self.qreg = QuantumRegister(0)
-        self.creg = ClassicalRegister(0)
+        self.qreg_counter = 0
+        self.creg_counter = 0
+        self.qreg = QuantumRegister(0, 'qreg')
+        self.creg = ClassicalRegister(0, 'creg')
         self.circuit = QuantumCircuit()
+        self.circuit.add_register(self.qreg)
+        self.circuit.add_register(self.creg)
 
         # Dictionaries to keep track of qubits and classical bits
         self.qubits = {}
@@ -41,11 +50,26 @@ class Commands:
         if q_name in self.qubits:
             raise ValueError(f"Qubit '{q_name}' is already defined.")
 
-        # Add a new qubit to the Quantum Register
-        self.qreg = QuantumRegister(1, q_name)
-        self.circuit.add_register(self.qreg)
-        self.qubits[q_name] = self.qreg[0]
-        print(f"Defined qubit '{q_name}'.")
+        # Create a new QuantumRegister with a unique name
+        qreg_name = f'qreg_{self.qreg_counter}'
+        qreg = QuantumRegister(1, qreg_name)
+        self.circuit.add_register(qreg)
+        self.qubits[q_name] = qreg[0]
+        logger.info(f"Defined qubit '{q_name}'.")
+
+        # Create a corresponding ClassicalRegister with a unique name
+        creg_name = f'creg_{self.creg_counter}'
+        creg = ClassicalRegister(1, creg_name)
+        self.circuit.add_register(creg)
+        self.classical_bits[f'c_{q_name}'] = creg[0]
+        logger.info(f"Defined classical bit 'c_{q_name}' for qubit '{q_name}'.")
+
+        # Increment counters for unique register naming
+        self.qreg_counter += 1
+        self.creg_counter += 1
+
+        logger.info(f"Defined qubit '{q_name}' and classical bit 'c_{q_name}'.")
+
 
     def apply_gate(self, gate, q_name, target_q=None):
         if gate in ["h", "x"]:
@@ -67,20 +91,36 @@ class Commands:
         else:
             raise ValueError(f"Unknown gate '{gate}'.")
 
-    def measure_qubit(self, q_name, c_name):
+    def measure_qubit(self, q_name, basis_str):
         if q_name not in self.qubits:
             raise ValueError(f"Qubit '{q_name}' is not defined.")
-        if c_name in self.classical_bits:
-            raise ValueError(f"Classical bit '{c_name}' is already defined.")
+        c_name = f"c_{q_name}"
+        if c_name not in self.classical_bits:
+            raise ValueError(f"Classical bit '{c_name}' is not defined.")
 
-        # Add a new classical bit
-        self.creg = ClassicalRegister(1, c_name)
-        self.circuit.add_register(self.creg)
-        self.classical_bits[c_name] = self.creg[0]
+        # Map basis string to integer
+        if basis_str.upper() == "H":
+            basis = 0  # Rectilinear
+        elif basis_str.upper() == "X":
+            basis = 1  # Diagonal
+        else:
+            raise ValueError(
+                f"Invalid basis '{basis_str}'. Use 'H' for rectilinear or 'X' for diagonal."
+            )
 
-        # Measure the qubit into the classical bit
+        self.bob_bases.append(basis)
+
+        # Apply basis transformation if necessary
+        if basis == 1:
+            self.circuit.h(self.qubits[q_name])
+
+        # Measure the qubit into the corresponding classical bit
         self.circuit.measure(self.qubits[q_name], self.classical_bits[c_name])
-        print(f"Measured qubit '{q_name}' into classical bit '{c_name}'.")
+
+        logger.info(
+            f"Bob measured qubit '{q_name}' with basis={'H' if basis == 0 else 'X'} into classical bit '{c_name}'."
+        )
+
 
     def print_variable(self, var_name):
         # Schedule the variable for printing after execution
@@ -159,9 +199,9 @@ class Commands:
         job = self.simulator.run(compiled_circuit, shots=1)
         result = job.result()
         counts = result.get_counts()
-        outcome = list(counts.keys())[0]
+        outcome = list(counts.keys())[0].replace(" ", "")  # Remove any spaces
 
-        print(f"Measurement outcome: {outcome}")
+        logger.info(f"Measurement outcome: {outcome}")
 
         # Extract Bob's bits based on classical bits
         for q_name in self.qubits:
@@ -169,15 +209,29 @@ class Commands:
             if c_name in self.classical_bits:
                 # Qiskit returns bitstrings in little endian; reverse the outcome
                 bit_index = list(self.classical_bits.keys()).index(c_name)
-                bit = int(outcome[::-1][bit_index])
-                self.bob_bits.append(bit)
+                try:
+                    bit = int(outcome[::-1][bit_index])
+                    self.bob_bits.append(bit)
+                except IndexError:
+                    logger.error(f"Bit index {bit_index} out of range for outcome '{outcome}'.")
+                    print(f"Execution Error: Bit index {bit_index} out of range for outcome '{outcome}'.")
+                    return
+                except ValueError:
+                    logger.error(f"Invalid bit value '{outcome[::-1][bit_index]}' for classical bit '{c_name}'.")
+                    print(f"Execution Error: Invalid bit value '{outcome[::-1][bit_index]}' for classical bit '{c_name}'.")
+                    return
 
         # Sift keys where Alice's and Bob's bases match
+        self.sifted_alice_bits = []
+        self.sifted_bob_bits = []
         for i in range(len(self.alice_bases)):
             if self.alice_bases[i] == self.bob_bases[i]:
                 self.shared_key.append(self.alice_bits[i])
+                self.sifted_alice_bits.append(self.alice_bits[i])
+                self.sifted_bob_bits.append(self.bob_bits[i])
 
-        print(f"Sifted key: {self.shared_key}")
+        logger.info(f"Sifted key: {self.shared_key}")
+
 
     def check_eavesdropping(self, probability=0.5, threshold=0.1):
         # Update eavesdropping parameters if provided

@@ -31,11 +31,11 @@ def main():
 
     # Initialize the DSLInterpreter without passing script to __init__
     interpreter = DSLInterpreter()
-    print("DSLInterpreter initialized.")  # Debugging statement
+    
 
     # Execute the interpreter by passing the script to interpret()
     interpreter.interpret(script)
-    print("DSL Interpreter execution completed.")  # Debugging statement
+
 
 if __name__ == "__main__":
     main()

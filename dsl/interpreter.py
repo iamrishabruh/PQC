@@ -1,35 +1,32 @@
 # dsl/interpreter.py
 
+import logging
 from .parser import parse
 from .commands import Commands
 
+# Configure logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
+
 class DSLInterpreter:
     def __init__(self):
-        print("Initializing DSLInterpreter...")
         self.commands = Commands()
-        print("DSLInterpreter initialized successfully.")
+        logger.info("DSLInterpreter initialized.")
 
     def interpret(self, script):
-        print("Starting interpretation of the script...")
+        logger.info("Starting interpretation of the script...")
         try:
             # Parse the script
-            parsed_commands = parse(script)  # Correctly parse the script
-            print(f"Parsed commands: {parsed_commands}")
-        except SyntaxError as e:
-            print(f"Parsing Error: {e}")
-            return
+            parsed_commands = parse(script)
+            logger.info(f"Parsed commands: {parsed_commands}")
         except Exception as e:
-            print(f"Unexpected Parsing Error: {e}")
-            return
-
-        if not parsed_commands:
-            print("No commands to execute.")
+            logger.error(f"Parsing Error: {e}")
             return
 
         # Execute each command in the parsed script
         for idx, cmd in enumerate(parsed_commands, start=1):
-            print(f"Executing command {idx}: {cmd}")
             action = cmd[0]
+            logger.info(f"Executing command {idx}: {cmd}")
             try:
                 if action == 'qubit':
                     self.commands.define_qubit(cmd[1])
@@ -54,51 +51,50 @@ class DSLInterpreter:
                 elif action == 'eavesdrop':
                     self.commands.execute_eavesdropping()
                 else:
-                    print(f"Unknown action '{action}' encountered.")
+                    logger.warning(f"Unknown action '{action}' encountered.")
             except ValueError as ve:
-                print(f"Execution Error: {ve}")
+                logger.error(f"Execution Error: {ve}")
                 return
             except Exception as ex:
-                print(f"Unexpected Error: {ex}")
+                logger.error(f"Unexpected Error: {ex}")
                 return
 
         # After executing all commands, handle print instructions
         self.execute_prints()
-        print("Interpretation of the script completed.")
 
     def execute_prints(self):
-        print("Executing print instructions...")
         for instr in self.commands.instructions:
             if instr[0] == 'print':
                 var_name = instr[1]
-                print(f"Handling print for variable: {var_name}")
                 # Check if it's a classical bit
                 if var_name.startswith('c'):
                     if var_name in self.commands.classical_bits:
                         bit = self.retrieve_bit_value(var_name)
+                        logger.info(f"{var_name} = {bit}")
                         print(f"{var_name} = {bit}")
                     else:
+                        logger.error(f"Print Error: Classical bit '{var_name}' is not defined.")
                         print(f"Print Error: Classical bit '{var_name}' is not defined.")
                 elif var_name.startswith('k'):
                     # It's a secret key
                     if hasattr(self.commands, var_name):
                         key = getattr(self.commands, var_name)
+                        logger.info(f"{var_name} = {key}")
                         print(f"{var_name} = {key}")
                     else:
+                        logger.error(f"Print Error: Key '{var_name}' is not defined.")
                         print(f"Print Error: Key '{var_name}' is not defined.")
                 else:
+                    logger.error(f"Print Error: Unknown variable '{var_name}'.")
                     print(f"Print Error: Unknown variable '{var_name}'.")
 
     def retrieve_bit_value(self, c_name):
+        # Retrieve the measurement outcome from the sifted keys
         try:
             index = list(self.commands.classical_bits.keys()).index(c_name)
-            if index < len(self.commands.bob_bits):
-                bit = self.commands.bob_bits[index]
-                print(f"Retrieved bit value for {c_name}: {bit}")
-                return bit
+            if index < len(self.commands.sifted_bob_bits):
+                return self.commands.sifted_bob_bits[index]
             else:
-                print(f"Bit index for {c_name} is out of range.")
                 return "Undefined"
         except ValueError:
-            print(f"Classical bit '{c_name}' not found.")
             return "Undefined"
