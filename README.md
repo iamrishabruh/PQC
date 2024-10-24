@@ -119,4 +119,4 @@ This project is licensed under the [MIT License](LICENSE).
 
 ## Contact
 
-For questions or suggestions, please open an issue in the repository or contact the author at [your-email@example.com](mailto:your-email@example.com).
+For questions or suggestions, please open an issue in the repository or contact the author at [rchouhan.network@gmail.com](mailto:rchouhan.network@gmail.com).
